@@ -5,15 +5,22 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.springframework.stereotype.Service;
+
 import com.swapfile.dtos.SwapFileDTO;
 
+@Service
 public class SwapFileService {
 
 	public SwapFileDTO swap() {
+
+		SwapFileDTO response = new SwapFileDTO();
+
 		FileLock lock = null;
 
 		Path source = Paths.get("/src/test/resources/example1.properties");
@@ -28,21 +35,23 @@ public class SwapFileService {
 
 			Files.move(source, source.resolveSibling("example1OLD.properties"));
 
+			response.setMessage("Success");
+
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			response.setMessage("File not found: " + e.getMessage());
+		} catch (IOException | OverlappingFileLockException e) {
+			response.setMessage("The files are in use by another process, try again: " + e.getMessage());
+			response.setMessage(e.getMessage());
 		} finally {
 
 			tryReleaseLockedFile(lock);
 		}
-		return null;
+
+		return response;
 	}
 
-	private FileLock tryLockFile(FileChannel channel) throws IOException {
-		//FileLock lock = channel.lock();
-		FileLock lock = channel.tryLock();
-		return lock;
+	private FileLock tryLockFile(FileChannel channel) throws IOException, OverlappingFileLockException {
+		return channel.tryLock();
 	}
 
 	private void tryReleaseLockedFile(FileLock lock) {
