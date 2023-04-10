@@ -28,7 +28,15 @@ public class SwapFileController {
 			ResponseEntity.badRequest().body("Invalid credential.");
 		}
 
-		return ResponseEntity.ok().body(swapFileService.swap());
+		SwapFileDTO response = swapFileService.swap();
+
+		if (!response.isSuccess()) {
+			response.setMessage(response.getMessage() + "\n Restoring backups.");
+			swapFileService.restoreBackups();
+			return ResponseEntity.badRequest().body(response);
+		}
+
+		return ResponseEntity.ok().body(response);
 	}
 
 }
