@@ -95,14 +95,8 @@ public class SwapFileService {
 	public void restoreBackups() {
 
 		Path lSource = Paths.get(this.source);
-		Path lTarget = Paths.get(this.target);
 
 		if (Files.exists(lSource)) {
-			// nothing to do
-			return;
-		}
-
-		if (Files.exists(lTarget)) {
 			// nothing to do
 			return;
 		}
@@ -111,14 +105,9 @@ public class SwapFileService {
 
 			Path bkpSource = Paths.get(lSource.getParent().toString() + System.getProperty(SYSTEM_FILE_SEPARATOR)
 					+ PREFIX_BKP + lSource.getFileName());
-			Path bkpTarget = Paths.get(lTarget.getParent().toString() + System.getProperty(SYSTEM_FILE_SEPARATOR)
-					+ PREFIX_BKP + lTarget.getFileName());
-
-			System.out.println(bkpSource.toAbsolutePath().toString() + bkpSource.getFileName());
 
 			// restoring backup files
 			Files.copy(bkpSource, lSource.resolveSibling(lSource.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
-			Files.copy(bkpTarget, lTarget.resolveSibling(lTarget.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
 
 		} catch (Exception e) {
 
