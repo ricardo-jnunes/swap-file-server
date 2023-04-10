@@ -1,11 +1,6 @@
 package com.swapfile.services;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,45 +16,47 @@ public class SwapFileService {
 
 		SwapFileDTO response = new SwapFileDTO();
 
-		FileLock lock = null;
+		Path source = Paths.get("C:/swap-file-server/src/test/resources/example.properties");
+		Path target = Paths.get("C:/swap-file-server/src/test/resources/reduced_example.properties");
 
-		Path source = Paths.get("/src/test/resources/example1.properties");
-		Path target = Paths.get("/src/test/resources/example2.properties");
+		if (Files.notExists(source)) {
+			response.setMessage("File not found: " + source.getFileName());
+			return response;
+		}
 
-		// locking to another system not move or delete the file while
-		// processing
-		try (RandomAccessFile raf = new RandomAccessFile(source.toString(), "rw");
-				FileChannel channel = raf.getChannel()) {
+		if (Files.notExists(target)) {
+			response.setMessage("File not found: " + target.getFileName());
+			return response;
+		}
 
-			lock = tryLockFile(channel);
+		try {
 
-			Files.move(source, source.resolveSibling("example1OLD.properties"));
+			// temporary file
+			Files.move(source, source.resolveSibling("example_moved.properties"));
+			Files.move(target, target.resolveSibling("reduced_example_moved.properties"));
 
 			response.setMessage("Success");
 
-		} catch (FileNotFoundException e) {
-			response.setMessage("File not found: " + e.getMessage());
-		} catch (IOException | OverlappingFileLockException e) {
-			response.setMessage("The files are in use by another process, try again: " + e.getMessage());
+		} catch (IOException e) {
 			response.setMessage(e.getMessage());
-		} finally {
+		}
 
-			tryReleaseLockedFile(lock);
+		try {
+
+			Path source2 = Paths.get("C:/swap-file-server/src/test/resources/example_moved.properties");
+			Path target2 = Paths.get("C:/swap-file-server/src/test/resources/reduced_example_moved.properties");
+
+			// temporary file
+			Files.move(source2, source2.resolveSibling("reduced_example.properties"));
+			Files.move(target2, target2.resolveSibling("example.properties"));
+
+			response.setMessage("Success");
+
+		} catch (IOException e) {
+			response.setMessage(e.getMessage());
 		}
 
 		return response;
-	}
-
-	private FileLock tryLockFile(FileChannel channel) throws IOException, OverlappingFileLockException {
-		return channel.tryLock();
-	}
-
-	private void tryReleaseLockedFile(FileLock lock) {
-		try {
-			if (lock != null)
-				lock.release();
-		} catch (Exception e) {
-		}
 	}
 
 }
