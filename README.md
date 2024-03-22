@@ -1,5 +1,12 @@
 # swap-file-server
 
+This Spring Boot application aims to allow file exchange on a server through an API call.
+
+## Use Case
+A configuration file is being used by a tool, and for some reason, that tool requires a different configuration. Through the API call, you can swap out this file online.
+
+I know there are other methods to accomplish this type of task, but if needed... we have this.
+
 ## RUN
 
 java -jar swap-file-server-0.0.1-SNAPSHOT.jar
